@@ -1,0 +1,115 @@
+------------------------------------------------------------------------------------------------------------------------
+STRUKTURA BAZY DANYCH
+------------------------------------------------------------------------------------------------------------------------
+
++-------------------+          +-------------------+          +-----------------+
+|    SpeedCamera    |          | ViolationRegistry  |         |     Driver      |
++-------------------+          +-------------------+          +-----------------+
+| SpeedCameraID     |<---------| SpeedCameraID      |         | DriverID        |
+| Location          |          | ViolationID        |-------->| FirstName       |
+| AllowedSpeed      |          | ViolationDate      |         | LastName        |
++-------------------+          | DriverID           |         | RegistrationNum |
+                               | OffenseID          |         +-----------------+
+                               +-------------------+
+                                     |
+                                     |
+                                     V
+                            +------------------+
+                            |    Offense       |
+                            +------------------+
+                            | OffenseID        |
+                            | OffenseDesc      |
+                            | PenaltyPoints    |
+                            | FineAmount       |
+                            +------------------+
+
+SpeedCamera (Fotoradar): Zawiera informacje o fotoradarach (identyfikator, miejscowość, dozwolona prędkość).
+
+Driver (Kierowcy): Zawiera dane kierowców (IdOsoby, imię, nazwisko, numer rejestracyjny pojazdu).
+
+ViolationRegistry (Rejestr): Zawiera dane o wykroczeniach (IdZdarzenia, data, identyfikator kierowcy, identyfikator
+fotoradaru, identyfikator wykroczenia). Jest połączona z tabelą Driver, SpeedCamera, oraz Offense poprzez klucze obce.
+
+Offense (Taryfikator): Przechowuje informacje o typach wykroczeń (IdWykroczenia, opis wykroczenia, liczba punktów
+karnych, kwota mandatu).
+
+------------------------------------------------------------------------------------------------------------------------
+STRUKTURA PROJEKTU
+------------------------------------------------------------------------------------------------------------------------
+
+project/
+│
+├── data/                              # Katalog z plikami danych (CSV, JSON)
+│   ├── drivers.csv                    # Plik CSV z danymi kierowców
+│   └── speed_cameras.json             # Plik JSON z danymi fotoradarów
+│
+├── scripts/                           # Skrypty pomocnicze
+│   ├── load_data.py                   # Skrypt do ładowania danych do bazy
+│
+├── src/                               # Kod źródłowy aplikacji
+│   ├── __init__.py
+│   ├── database.py                    # Obsługa połączeń z bazą danych (MySQLConnectionManager)
+│   ├── repository.py                  # Repozytoria dla operacji CRUD
+│   ├── entity.py                      # Definicje klas encji (dataclasses)
+│   ├── table_manager.py               # Zarządzanie tabelami (tworzenie, usuwanie)
+│   └── data_loader.py                 # Funkcje do ładowania danych CSV/JSON do tabel
+│
+├── tests/                             # Testy jednostkowe
+│   ├── __init__.py
+│   ├── test_repository.py             # Testy repozytoriów
+│   ├── test_data_loader.py            # Testy ładowania danych
+│
+├── .env                               # Plik konfiguracyjny z danymi połączeniowymi do bazy
+├── Pipfile                            # Zależności zarządzane przez pipenv
+├── Pipfile.lock                       # Zapisane wersje zależności
+├── pytest.ini                         # Konfiguracja pytesta
+├── docker-compose.yml                 # Docker Compose dla MySQL
+
+------------------------------------------------------------------------------------------------------------------------
+DEPENDENCIES
+------------------------------------------------------------------------------------------------------------------------
+
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+mysql-connector-python = "*"         # Obsługa połączeń z MySQL
+python-dotenv = "*"                  # Ładowanie zmiennych z .env
+inflection = "*"                     # Manipulacja nazwami tabel
+
+[dev-packages]
+pytest = "*"                         # Testy jednostkowe
+pytest-cov = "*"                     # Raportowanie pokrycia testów
+testcontainers = "*"                 # Uruchamianie MySQL w Dockerze do testów
+mypy = "*"                           # Statyczna analiza typów (opcja, ale zalecana)
+
+[requires]
+python_version = "3.12"              # Wersja Pythona
+
+Zeby zainstalowac dependencies zastosowalem polecenie:
+
+>> pipenv install --dev
+Oprócz zależności produkcyjnych, instalowane są również zależności deweloperskie. Te zależności są
+używane głównie do celów związanych z rozwojem aplikacji, takich jak testowanie, lintowanie kodu,
+czy narzędzia do automatyzacji. Są one zapisane w sekcji "dev-packages" w pliku Pipfile.
+
+Mozesz rowniez zastosowac:
+
+>> pipenv install
+Instalowane są tylko zależności produkcyjne, czyli te, które są niezbędne do uruchomienia aplikacji.
+Są one zapisane w sekcji "packages" w pliku Pipfile.
+
+Zeby sprawdzic, czy dzialaja testy wykonaj polecenie:
+>> pipenv run pytest --cov=src --cov-report=html tests/
+
+--cov=src:
+--cov to opcja dostarczana przez dodatek pytest-cov, który mierzy pokrycie testami kodu źródłowego
+(coverage).
+src: Określa, który katalog ma być analizowany pod kątem pokrycia testami. W tym przypadku pytest-cov
+będzie sprawdzał, ile kodu w katalogu src zostało przetestowane przez testy.
+
+tests/:
+To argument, który mówi pytestowi, gdzie szukać plików testowych. Wskazujemy, że testy znajdują się
+w katalogu tests/.
