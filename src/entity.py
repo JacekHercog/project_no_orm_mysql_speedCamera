@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import Self, override
+from typing import Self, override, Any
 
 @dataclass
 class Entity(ABC):
@@ -9,7 +9,7 @@ class Entity(ABC):
 
     @classmethod    
     @abstractmethod
-    def from_row(cls, *args: str) -> Self:
+    def from_row(cls, *args: Any) -> Self:
         """Convert a database row to an entity."""
         pass
 
@@ -22,7 +22,7 @@ class SpeedCamera(Entity):
 
     @classmethod    
     @override
-    def from_row(cls, *args: str) -> Self:
+    def from_row(cls, *args: Any) -> Self:
         """Convert a database row to a speed camera."""
         return cls(
             id_=int(args[0]),
@@ -39,7 +39,7 @@ class Driver(Entity):
 
     @classmethod
     @override
-    def from_row(cls, *args: str) -> Self:
+    def from_row(cls, *args: Any) -> Self:
         """Convert a database row to a driver."""
         return cls(
             id_=int(args[0]),
@@ -49,7 +49,7 @@ class Driver(Entity):
         )
     
 @dataclass
-class Offence(Entity):
+class Offense(Entity):
     """Base class for offences."""
     description: str | None = None  
     penalty_points: int | None = None
@@ -57,7 +57,7 @@ class Offence(Entity):
 
     @classmethod
     @override
-    def from_row(cls, *args: str) -> Self:
+    def from_row(cls, *args: Any) -> Self:
         """Convert a database row to an offence."""
         return cls(
             id_=int(args[0]),
@@ -76,7 +76,7 @@ class Violation(Entity):
 
     @classmethod
     @override
-    def from_row(cls, *args: str) -> Self:
+    def from_row(cls, *args: Any) -> Self:
         """Convert a database row to a violation."""
         return cls(
             id_=int(args[0]),
