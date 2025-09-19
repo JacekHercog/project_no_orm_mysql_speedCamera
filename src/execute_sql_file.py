@@ -1,7 +1,8 @@
 from mysql.connector import Error
 from src.database import with_db_connection, MySQLConnectionManager
-from typing import TYPE_CHECKING
+import logging
 
+logger = logging.getLogger(__name__)    
 
 class SQLFileExecutor:
     def __init__(self, connection_manager: MySQLConnectionManager):
@@ -19,16 +20,12 @@ class SQLFileExecutor:
             for command in sql_commands.split(';'):
                 command = command.strip()
                 if command:
-                    print(f"Executing command: {command[:30]}...")  # Print first 30 chars
+                    logger.info(f"Executing command:\n {command}")
                     cursor.execute(command)
             conn.commit()
             cursor.close()
-            print(f"Executed SQL file: {file_path}")
-        except FileNotFoundError:
-            print(f"File not found: {file_path}")
+            logger.info(f"Executed SQL file: {file_path}")
         except Error as e:
-            print(f"Error executing SQL file: {e}")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-        
-        
+            logger.error(f"Error executing SQL file: {e}")
+            raise e
+

@@ -28,7 +28,7 @@ class CrudRepository[T: Entity]:
         self._cursor.execute(sql)
 
         # get all data at once into a list and you have to wait until it is created
-        return [self._entity_type.from_row(row) for row in self._cursor.fetchall()]
+        return [self._entity_type.from_row(*row) for row in self._cursor.fetchall()]
     
     @with_db_connection
     def find_all_by_portion(self, size_portion: int = 500) -> list[T]:
@@ -41,7 +41,7 @@ class CrudRepository[T: Entity]:
             data = self._cursor.fetchmany(size=size_portion)  # get portion of data, in this case 500 records
             if not data:
                 break
-            rows.extend([self._entity_type.from_row(row) for row in data])
+            rows.extend([self._entity_type.from_row(*row) for row in data])
         return rows
     
     # Method 3: Returns generator (no return needed)
@@ -53,7 +53,44 @@ class CrudRepository[T: Entity]:
         # Every iteration contains a single record, you fetch row by row
         # and in this way you can pull huge amounts of data
         for row in self._cursor:
-            yield self._entity_type.from_row(row)
+            yield self._entity_type.from_row(*row)
+        
+    @with_db_connection
+    def insert(self, item: T) -> int:
+        sql = (f'insert into {self._table_name()} '
+               f'({self._column_names_for_insert()}) '
+               f'values ({self._column_values_for_insert(item)})')
+        print(f'INSERT: {sql}')
+        self._cursor.execute(sql)
+        return self._cursor.lastrowid if self._cursor.lastrowid else 0
 
     def _table_name(self) -> str:
         return inflection.pluralize(inflection.underscore(self._entity_type.__name__))
+    
+    def _column_names_for_insert(self) -> str:
+        return ', '.join([field for field in self._entity_type.__annotations__.keys() if field != 'id_'])
+
+    def _column_values_for_insert(self, item: T) -> str:
+        fields = [field for field in self._entity_type.__annotations__.keys() if field != 'id_']
+        values = [
+            str(getattr(item, field)) if isinstance(getattr(item, field), (int, float))
+            else f"'{getattr(item, field)}'"
+            for field in fields
+        ]
+        return ', '.join(values)
+
+class DriverRepository(CrudRepository[Driver]):
+    def __init__(self, connection_manager: MySQLConnectionManager):
+        super().__init__(connection_manager, Driver)
+
+class SpeedCameraRepository(CrudRepository[SpeedCamera]):
+    def __init__(self, connection_manager: MySQLConnectionManager):
+        super().__init__(connection_manager, SpeedCamera)
+
+class OffenseRepository(CrudRepository[Offense]):
+    def __init__(self, connection_manager: MySQLConnectionManager):
+        super().__init__(connection_manager, Offense)
+
+class ViolationRepository(CrudRepository[Violation]):
+    def __init__(self, connection_manager: MySQLConnectionManager):
+        super().__init__(connection_manager, Violation)
