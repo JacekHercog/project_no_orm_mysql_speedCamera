@@ -25,17 +25,18 @@ class MySQLConnectionManager:
 # nad ktora go umiescimy
 def with_db_connection(func:Callable)-> Callable:
     def wrapper(self,*args: Any, **kwargs:Any) -> Any:
-        with self._connection_manager.get_connection() as conn:
-            self._conn = conn
-            self._cursor = conn.cursor()
-        try:
-            result = func(self, *args, **kwargs)
-            self._conn.commit()
-            return result
-        except Exception as e:
-            self._conn.rollback()
-            raise e
-        finally:
-            self._cursor.close()
-            self._conn.close()
+        with (
+            self._connection_manager.get_connection() as conn,
+            conn.cursor() as cursor
+        ):
+            try:
+                self._conn = conn
+                self._cursor = cursor
+                result = func(self, *args, **kwargs)
+                self._conn.commit()
+                return result
+            except Exception as e:
+                if self._conn:
+                    self._conn.rollback()
+                raise e   
     return wrapper
